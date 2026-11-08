@@ -1,10 +1,19 @@
 # BF6-MC · 战地 6 风格 Minecraft 整合包
 
+[![Minecraft](https://img.shields.io/badge/Minecraft-1.18.2-62B47A?logo=minecraft&logoColor=white)](#)
+[![Forge](https://img.shields.io/badge/Forge-40.2.21-DFA86A)](#)
+[![Java](https://img.shields.io/badge/Java-17-E76F00?logo=openjdk&logoColor=white)](#)
+[![Players](https://img.shields.io/badge/Players-1--3%20%2B%20AI-3CC8DC)](#)
+[![License](https://img.shields.io/badge/License-MIT-blue)](LICENSE)
+
 MC **1.18.2** / Forge **40.2.21** / Java **17** — 1–3 人 + AI 补位，完整复刻战地 6 流程。
 
 ```
 主菜单 → 单人/多人 → 模式选择 → 地图选择 → 大厅 → 征服 / 大逃杀 → 结算 → 回大厅
 ```
+
+> **前端已完成可直接用**（22 张 UI 素材 + 7 张效果图）。
+> **后端是 KubeJS 单文件原型**，跑得通但地图地形、枪械 ID、载具 ID 需按 `docs/` 标定。
 
 ---
 

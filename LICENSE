@@ -1,0 +1,38 @@
+MIT License
+
+Copyright (c) 2026 SturgeonIsSleepy
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
+
+---
+
+## 第三方组件声明 / Third-party notices
+
+本项目**不包含**任何 Minecraft 模组的二进制文件。使用者需自行从官方渠道
+（CurseForge / Modrinth / GitHub Releases）下载 `MODLIST.md` 中列出的模组，
+并遵守各自的许可协议。
+
+This repository does **not** redistribute any Minecraft mod binaries.
+Users must obtain the mods listed in `MODLIST.md` from their official
+distribution channels and comply with each mod's own license.
+
+「BATTLEFIELD」为 Electronic Arts 的商标。本项目的 UI 素材是对该视觉风格的
+致敬性再创作，与 EA / DICE 无任何关联，也不代表其认可。
+"BATTLEFIELD" is a trademark of Electronic Arts. The UI assets here are
+stylistic homages, not affiliated with or endorsed by EA / DICE.
