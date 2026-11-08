@@ -1,0 +1,72 @@
+name: validate
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: KubeJS 脚本语法检查
+        run: node --check kubejs/server_scripts/bf6.js
+
+      - name: 检查脚本里是否残留占位符
+        run: |
+          if grep -n '{{' kubejs/server_scripts/bf6.js; then
+            echo "::error::bf6.js 里还有未替换的占位符"
+            exit 1
+          fi
+          echo "无占位符残留"
+
+      - name: 检查顶层重复函数声明
+        run: |
+          dup=$(grep -oP '^function\s+\K[A-Za-z_$][\w$]*' kubejs/server_scripts/bf6.js | sort | uniq -d)
+          if [ -n "$dup" ]; then
+            echo "::error::重复的顶层函数声明: $dup"
+            exit 1
+          fi
+          echo "无重复声明"
+
+      - name: 检查素材文件存在
+        run: |
+          missing=0
+          for f in \
+            background.png lobby_bg.png logo.png scanline.png \
+            btn_single.png btn_multi.png btn_settings.png btn_quit.png \
+            card_info.png card_mode_conquest.png card_mode_br.png \
+            card_map_urban.png card_map_desert.png card_map_alpine.png card_map_industrial.png \
+            map_urban_tactical.png map_desert_tactical.png \
+            map_alpine_tactical.png map_industrial_tactical.png \
+            hud_topbar.png hud_class.png hud_ammo.png hud_sidebar.png \
+            hud_br_panel.png result_header.png
+          do
+            if [ ! -f "fancymenu/assets/$f" ]; then
+              echo "::error::缺少素材 fancymenu/assets/$f"
+              missing=1
+            fi
+          done
+          if [ "$missing" -eq 1 ]; then exit 1; fi
+          echo "素材齐全"
+
+      - name: 检查文档内链
+        run: |
+          bad=0
+          # 抽出 markdown 里的相对路径链接，检查目标是否存在
+          grep -ohP '\]\(\K[^)#][^)]*(?=\))' README.md MODLIST.md fancymenu/*.md docs/*.md config/*.md 2>/dev/null \
+            | grep -vE '^(https?:|mailto:|#)' \
+            | sort -u \
+            | while read -r p; do
+                if [ ! -e "$p" ]; then
+                  echo "::warning::失效链接 $p"
+                fi
+              done
+          echo "链接检查完成"
