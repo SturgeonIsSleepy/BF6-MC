@@ -86,13 +86,12 @@ jobs:
       - name: 检查文档里没有指向已删除文件的引用
         run: |
           fail=0
-          # 这些文件已不存在，任何文档提到都是过时信息
+          # 这些文件已不存在，任何 .md 提到都是过时信息。
+          # 只查 .md —— bf6.js 头部的历史注释会提到旧分片名，那是合法的。
           for dead in 00_core.js 01_maps_lobby.js 02_conquest.js 03_battle_royale.js \
                       04_ai_bots.js 05_results.js 06_feed_damage.js 07_hud.js bundle.py \
                       mock_06_result.png; do
-            if grep -rn --include='*.md' --include='*.js' -- "$dead" . 2>/dev/null \
-               | grep -v '\.git/' \
-               | grep -v 'scripts/gen_all.py' ; then
+            if grep -rn --include='*.md' -- "$dead" . 2>/dev/null | grep -v '\.git/'; then
               echo "::error::文档仍引用已删除的 $dead"
               fail=1
             fi
