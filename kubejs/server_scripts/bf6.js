@@ -1,19 +1,24 @@
 // ================================================================
-//  BF6-MC  |  bf6.js  (single-file bundle)
+//  BF6-MC  |  bf6.js   —— 直接编辑本文件
 //
 //  MC 1.18.2 / Forge 40.2.21 / KubeJS 5.5
 //
-//  由 scripts/bundle.py 从以下分片合并生成，请勿直接改本文件：
-//    00_core.js          状态机 / 队伍 / 持久化 / 工具
-//    01_maps_lobby.js    地图表 / 大厅 / 投票 / 命令
-//    02_conquest.js      征服模式 / 兵种 / 重生
-//    03_battle_royale.js 大逃杀 / 缩圈 / 空投
-//    04_ai_bots.js       AI 补位
-//    05_results.js       结算 / 生涯统计
-//    06_feed_damage.js   击杀播报 / 倒地救援
-//    07_hud.js           sidebar
+//  历史：本文件早期由 8 个分片（00_core.js ~ 07_hud.js）合并而成。
+//        分片已删除，scripts/bundle.py 仅作存档、运行必然失败。
+//        **所有改动请直接编辑本文件。**
 //
-//  改逻辑请改分片后重跑： python scripts/bundle.py
+//  分区索引（下方 //#region 标注）：
+//    core          状态机 / 队伍 / 持久化 / 工具
+//    maps_lobby    地图表 / 大厅 / 投票 / 命令
+//    conquest      征服模式 / 兵种 / 重生
+//    battle_royale 大逃杀 / 缩圈 / 空投
+//    ai_bots       AI 补位
+//    results       结算 / 生涯统计
+//    feed_damage   击杀播报 / 倒地救援
+//    hud           sidebar
+//
+//  ⚠ 不要把本文件拆回多个 .js —— KubeJS 会加载 server_scripts/ 下
+//     所有 .js，拆分会重复注册事件。
 // ================================================================
 
 // ================================================================
@@ -47,13 +52,15 @@ var TEAM_COLOR = {
     bf6_blue: '§9'
 }
 
+// 大厅坐标：setblock 只接受整数，这里全部用整数。
+// 玩家传送时会自动落在方块中心，不需要 0.5 偏移。
 var LOBBY = {
     dimension: 'minecraft:overworld',
-    x: 0.5, y: 200, z: 0.5,
-    spawn:    { x: 0.5,  y: 200, z: 0.5 },
-    terminal: { x: 8.5,  y: 200, z: 0.5 },
-    mode:     { x: -8.5, y: 200, z: 0.5 },
-    ready:    { x: 0.5,  y: 200, z: 6.5 }
+    x: 0, y: 200, z: 0,
+    spawn:    { x: 0,  y: 200, z: 0  },
+    terminal: { x: 8,  y: 200, z: 0  },   // 右侧讲台：选地图
+    mode:     { x: -8, y: 200, z: 0  },   // 左侧讲台：选模式
+    ready:    { x: 0,  y: 200, z: 6  }
 }
 
 //#endregion
@@ -70,6 +77,9 @@ global.BF6.vote = {
     pool: [],
     votes: {}
 }
+
+// 谁按过「准备」。用集合而不是计数器，避免掉线/重进导致计数漂移。
+global.BF6.readySet = {}
 
 //#endregion
 //#region 持久化
@@ -176,6 +186,23 @@ function autoBalance(server) {
 function teamOf(username) {
     var p = global.BF6.players[username]
     return p ? p.team : null
+}
+
+/**
+ * 重新统计准备人数，并同步 global.BF6.readyCount。
+ * 只算当前在线的玩家，掉线的人自动作废。
+ */
+function recountReady(server) {
+    var online = onlinePlayers(server)
+    var set = global.BF6.readySet
+    var n = 0
+    online.forEach(function (u) { if (set[u]) n++ })
+    // 清掉已下线玩家的标记，防止集合无限增长
+    Object.keys(set).forEach(function (u) {
+        if (online.indexOf(u) < 0) delete set[u]
+    })
+    global.BF6.readyCount = n
+    return n
 }
 
 function teamPlayers(teamId) {
@@ -510,15 +537,17 @@ global.BF6._lobbyTick = function (server) {
     var mapName  = v.map  ? global.BF6.maps[v.map].name : '未选择'
     var modeName = v.mode ? MODE_INFO[v.mode].name      : '未选择'
     var total = onlinePlayers(server).length
+    var ready = recountReady(server)
 
     onlinePlayers(server).forEach(function (u) {
         bar(server, u, JSON.stringify({
             text: '§8[§6BF6§8] §7地图 §f' + mapName + ' §8| §7模式 §f' + modeName +
-                  ' §8| §7准备 §a' + global.BF6.readyCount + '§7/§f' + total
+                  ' §8| §7准备 §a' + ready + '§7/§f' + total
         }))
     })
 
-    if (total > 0 && global.BF6.readyCount >= total && v.map && v.mode) {
+    // 全员准备 + 已选图选模式 → 开简报
+    if (total > 0 && ready >= total && v.map && v.mode) {
         startBriefing(server)
     }
 }
@@ -529,7 +558,7 @@ PlayerEvents.loggedIn(function (event) {
     if (!name) return
 
     global.BF6.players[name] = newPlayer(name)
-    global.BF6.readyCount = 0
+    recountReady(server)
 
     if (global.BF6.state === S.LOBBY) {
         toLobby(server, name)
@@ -546,7 +575,8 @@ PlayerEvents.loggedOut(function (event) {
     if (!name) return
     delete global.BF6.players[name]
     if (global.BF6.vote.votes) delete global.BF6.vote.votes[name]
-    global.BF6.readyCount = 0
+    delete global.BF6.readySet[name]
+    recountReady(event.server)
 })
 
 // 大厅里右键讲台 = 打开选择菜单
@@ -721,10 +751,14 @@ ServerEvents.commandRegistry(function (event) {
     var Commands = event.commands
     var Arguments = event.arguments
 
+    // 权限：OP 专属的子命令各自挂 requires(2)；
+    // vote / class 开放给所有人，否则大厅讲台的 clickEvent 对非 OP 无效。
+    function opOnly(src) { return src.hasPermission(2) }
+
     var root = Commands.literal('bf6')
-        .requires(function (src) { return src.hasPermission(2) })
 
         .then(Commands.literal('start')
+            .requires(opOnly)
             .then(Commands.argument('mode', Arguments.STRING.create(event))
                 .suggests(function (ctx, b) { b.suggest('conquest'); b.suggest('br'); return b.build() })
                 .executes(function (ctx) {
@@ -733,15 +767,21 @@ ServerEvents.commandRegistry(function (event) {
                     if (!MODE_INFO[mode]) return 0
                     global.BF6.vote.mode = mode
                     global.BF6.vote.map  = global.BF6.vote.map || rollRandomMap(mode)
-                    global.BF6.readyCount = onlinePlayers(server).length
+                    // OP 强制开局：把所有在线玩家标记为已准备，再走统一的开局流程
+                    onlinePlayers(server).forEach(function (u) {
+                        global.BF6.readySet[u] = true
+                    })
+                    recountReady(server)
                     startBriefing(server)
                     return 1
                 })))
 
         .then(Commands.literal('stop')
+            .requires(opOnly)
             .executes(function (ctx) { endMatch(ctx.source.server, 'admin'); return 1 }))
 
         .then(Commands.literal('map')
+            .requires(opOnly)
             .then(Commands.argument('id', Arguments.STRING.create(event))
                 .suggests(function (ctx, b) {
                     Object.keys(global.BF6.maps).forEach(function (k) { b.suggest(k) })
@@ -756,6 +796,7 @@ ServerEvents.commandRegistry(function (event) {
                     return 1
                 })))
 
+        // vote / class：所有人可用（大厅讲台靠它们工作）
         .then(Commands.literal('vote')
             .then(Commands.literal('map')
                 .then(Commands.argument('id', Arguments.STRING.create(event))
@@ -781,11 +822,13 @@ ServerEvents.commandRegistry(function (event) {
                         return 1
                     }))))
 
+        // ready：所有人可用（否则非 OP 的队友无法表示就绪）
         .then(Commands.literal('ready')
             .executes(function (ctx) {
                 var server = ctx.source.server
-                global.BF6.readyCount = onlinePlayers(server).length
-                bc(server, '§a全员已准备')
+                var who = nameOf(ctx.source.player)
+                if (who) global.BF6.readySet[who] = true
+                recountReady(server)
                 return 1
             }))
 
@@ -806,6 +849,7 @@ ServerEvents.commandRegistry(function (event) {
                 })))
 
         .then(Commands.literal('bot')
+            .requires(opOnly)
             .then(Commands.argument('count', Arguments.INTEGER.create(event))
                 .then(Commands.argument('team', Arguments.STRING.create(event))
                     .suggests(function (ctx, b) { b.suggest('bf6_red'); b.suggest('bf6_blue'); return b.build() })
@@ -817,6 +861,7 @@ ServerEvents.commandRegistry(function (event) {
                     }))))
 
         .then(Commands.literal('lobby')
+            .requires(opOnly)
             .executes(function (ctx) {
                 endMatch(ctx.source.server, 'admin')
                 return 1
@@ -1718,6 +1763,7 @@ function backToLobby(server) {
     global.BF6.timer = 0
     global.BF6.lobbyTimer = 0
     global.BF6.readyCount = 0
+    global.BF6.readySet = {}
     global.BF6.vote.votes = {}
     global.BF6.vote.map = null
     global.BF6.vote.mode = null

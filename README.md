@@ -12,7 +12,7 @@ MC **1.18.2** / Forge **40.2.21** / Java **17** — 1–3 人 + AI 补位，完�
 主菜单 → 单人/多人 → 模式选择 → 地图选择 → 大厅 → 征服 / 大逃杀 → 结算 → 回大厅
 ```
 
-> **前端已完成可直接用**（22 张 UI 素材 + 7 张效果图）。
+> **前端已完成可直接用**（25 张 UI 素材 + 7 张效果图）。
 > **后端是 KubeJS 单文件原型**，跑得通但地图地形、枪械 ID、载具 ID 需按 `docs/` 标定。
 
 ---
@@ -34,9 +34,9 @@ MC **1.18.2** / Forge **40.2.21** / Java **17** — 1–3 人 + AI 补位，完�
 
 ## 快速开始
 
-### 1. 装模组（26 个）
+### 1. 装模组（22 个）
 
-见 [`MODLIST.md`](MODLIST.md)。核心 21 个 + 性能 5 个，版本号照抄。
+见 [`MODLIST.md`](MODLIST.md)。核心 17 个 + 性能 5 个，版本号照抄。
 
 关键文件：
 
@@ -91,7 +91,7 @@ bf6/
 ├── fancymenu/
 │   ├── README.md              FancyMenu 落地步骤
 │   ├── UI-SPEC.md             完整设计规范
-│   ├── assets/                22 张可直接用的 PNG
+│   ├── assets/                25 张可直接用的 PNG
 │   └── mockups/               7 张效果图
 ├── config/
 │   ├── README.md              各 mod 的推荐配置
@@ -102,9 +102,9 @@ bf6/
 │   ├── 02-地图标定.md         把占位坐标换成真实坐标
 │   └── 03-键位.md             推荐键位（避免 mod 冲突）
 └── scripts/
-    ├── gen_all.py             重出 22 张 UI 素材
+    ├── gen_all.py             重出 25 张 UI 素材
     ├── gen_mockups.py         重出 7 张效果图
-    └── bundle.py              把 KubeJS 分片合并成 bf6.js
+    └── check-install.ps1      安装自检（Java/Forge/Mod/脚本/素材/配置）
 ```
 
 ---
@@ -159,7 +159,7 @@ bf6/
 | `/bf6 ready` | OP | 全员就绪 |
 | `/bf6 class <id>` | 所有人 | 切兵种 |
 | `/bf6 bot <n> <team>` | OP | 加 AI |
-| `/bf6 stop` / `/bf6 lobby` | OP | 中止 / 回大厅 |
+| `/bf6 stop` / `/bf6 lobby` | OP | 中止对局 → 15 秒结算 → 自动回大厅 |
 | `/bf6 status` | OP | 查状态 |
 
 兵种 id：`assault` / `engineer` / `support` / `recon` / `medic`
@@ -169,7 +169,7 @@ bf6/
 
 ## 已知限制
 
-1. **地图坐标是占位值**。`bf6.js` 里 4 张图用 `8000/16000/24000/32000` 四个区块中心，地形要自建或用 WorldEdit 贴。见 `docs/02-地图标定.md`。
+1. **地图坐标是占位值**。`bf6.js` 里 4 张图用 `8000/16000/24000/32000` 为方块坐标原点各占一块，地形要自建或用 WorldEdit 贴。见 `docs/02-地图标定.md`。
 
 2. **TaCZ 枪械 ID 是推测的**（`tacz:ak47` / `tacz:mp5` / `tacz:m249` / `tacz:m700` / `tacz:ump45`）。首次进游戏先 `/give @s tacz:modern_kinetic_gun` 看实际 ID，再改 `LOADOUTS`。
 
@@ -205,7 +205,7 @@ spawn-protection=0
 ## 重出素材
 
 ```bash
-python scripts/gen_all.py        # 22 张 UI 素材
+python scripts/gen_all.py        # 25 张 UI 素材
 python scripts/gen_mockups.py    # 7 张效果图
 ```
 

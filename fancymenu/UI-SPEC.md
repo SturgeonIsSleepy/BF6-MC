@@ -319,7 +319,7 @@ y=818 起，每行 66 高
 
 ## 06 结算
 
-![结算](mockups/mock_06_result.png)
+![结算](mockups/mock_07_result.png)
 
 ### 布局
 

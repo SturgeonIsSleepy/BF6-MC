@@ -10,12 +10,12 @@
 
 ```toml
 [controls]
-    # 滑铲
+    # 滑铲 —— 独占左 Ctrl
     keyCrawl = "key.keyboard.left.control"
     # 翻滚
     keyRoll = "key.keyboard.c"
-    # 快速跑
-    keyFastRun = "key.keyboard.left.alt"
+    # 快速跑 —— 留空，交给原版疾跑（左 Alt），避免与滑铲抢键
+    # keyFastRun = ""
     # 攀爬杆
     keyClimbPole = "key.keyboard.w"
     # 抓墙

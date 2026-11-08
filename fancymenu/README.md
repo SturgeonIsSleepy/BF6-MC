@@ -20,7 +20,7 @@ MC 1.18.2 战地 6 风格整合包的前端部分：主菜单 → 模式 → 地
 
 ---
 
-## 素材清单（`assets/`，22 个 PNG）
+## 素材清单（`assets/`，25 个 PNG）
 
 ### 背景与标识
 
@@ -157,7 +157,7 @@ FancyMenu 只能管**菜单**，不能进游戏世界。分工：
 ## 改配色 / 重出图
 
 ```bash
-python scripts/gen_all.py        # 重出 assets/ 全部 22 张
+python scripts/gen_all.py        # 重出 assets/ 全部 25 张
 python scripts/gen_mockups.py    # 重出 mockups/ 7 张效果图
 ```
 
@@ -183,7 +183,7 @@ MAPS = {
 ```
 
 新增地图：在 `MAPS` 加一项，`gen_all.py` 会自动出卡片和战术图。
-KubeJS 那边要同步在 `01_maps_lobby.js` 的 `global.BF6.maps` 加同 id 的条目。
+KubeJS 那边要同步在 `kubejs/server_scripts/bf6.js` 的 `global.BF6.maps` 加同 id 的条目。
 
 ---
 
@@ -207,6 +207,6 @@ KubeJS 那边要同步在 `01_maps_lobby.js` 的 `global.BF6.maps` 加同 id 的
 fancymenu/
 ├── README.md          本文件
 ├── UI-SPEC.md         完整设计规范
-├── assets/            22 张可直接用的 PNG
+├── assets/            25 张可直接用的 PNG
 └── mockups/           7 张效果图（给人看的，不用装进游戏）
 ```

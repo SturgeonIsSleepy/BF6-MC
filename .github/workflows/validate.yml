@@ -36,9 +36,34 @@ jobs:
           fi
           echo "无重复声明"
 
+      - name: 检查调用点是否都有定义
+        run: |
+          # 收集所有顶层 function 名
+          defined=$(grep -oP '^function\s+\K[A-Za-z_$][\w$]*' kubejs/server_scripts/bf6.js | sort -u)
+          # 本项目内部函数白名单前缀（避免误判 MC/KubeJS API）
+          fail=0
+          for fn in recountReady nameOf healthOf reviveScan maintainBots countBots \
+                    startConquest startBattleRoyale startBriefing endMatch backToLobby \
+                    giveLoadout respawnConquest spawnBots spawnVehicles clearBots clearVehicles \
+                    renderConquestHUD renderBRHUD renderResultPanel buildScoreboard \
+                    buildLobby showMapMenu showModeMenu setMapVote setModeVote recountVotes \
+                    rollRandomMap tickConquest tickBattleRoyale dropAirdrop onBRDeath \
+                    killFeed conquestPointScore updateSidebar setupSidebar teamLines \
+                    ensureTeams autoBalance setTeam teamPlayers onlinePlayers newPlayer P \
+                    pdata pget pset profile saveProfile mmss pick shuffle tp toLobby clearInv \
+                    bar bc bcTeam title announceFlag padLeft padRight topKey assistantsOf; do
+            if ! echo "$defined" | grep -qx "$fn"; then
+              echo "::error::函数 $fn 被引用但没有定义"
+              fail=1
+            fi
+          done
+          if [ "$fail" -eq 1 ]; then exit 1; fi
+          echo "内部函数全部有定义"
+
       - name: 检查素材文件存在
         run: |
           missing=0
+          count=0
           for f in \
             background.png lobby_bg.png logo.png scanline.png \
             btn_single.png btn_multi.png btn_settings.png btn_quit.png \
@@ -49,18 +74,34 @@ jobs:
             hud_topbar.png hud_class.png hud_ammo.png hud_sidebar.png \
             hud_br_panel.png result_header.png
           do
+            count=$((count+1))
             if [ ! -f "fancymenu/assets/$f" ]; then
               echo "::error::缺少素材 fancymenu/assets/$f"
               missing=1
             fi
           done
           if [ "$missing" -eq 1 ]; then exit 1; fi
-          echo "素材齐全"
+          echo "素材齐全（$count 张）"
+
+      - name: 检查文档里没有指向已删除文件的引用
+        run: |
+          fail=0
+          # 这些文件已不存在，任何文档提到都是过时信息
+          for dead in 00_core.js 01_maps_lobby.js 02_conquest.js 03_battle_royale.js \
+                      04_ai_bots.js 05_results.js 06_feed_damage.js 07_hud.js bundle.py \
+                      mock_06_result.png; do
+            if grep -rn --include='*.md' --include='*.js' -- "$dead" . 2>/dev/null \
+               | grep -v '\.git/' \
+               | grep -v 'scripts/gen_all.py' ; then
+              echo "::error::文档仍引用已删除的 $dead"
+              fail=1
+            fi
+          done
+          if [ "$fail" -eq 1 ]; then exit 1; fi
+          echo "无失效引用"
 
       - name: 检查文档内链
         run: |
-          bad=0
-          # 抽出 markdown 里的相对路径链接，检查目标是否存在
           grep -ohP '\]\(\K[^)#][^)]*(?=\))' README.md MODLIST.md fancymenu/*.md docs/*.md config/*.md 2>/dev/null \
             | grep -vE '^(https?:|mailto:|#)' \
             | sort -u \
@@ -70,3 +111,18 @@ jobs:
                 fi
               done
           echo "链接检查完成"
+
+      - name: 检查文档声称的素材数量与实际一致
+        run: |
+          actual=$(ls -1 fancymenu/assets/*.png | wc -l)
+          echo "实际素材数: $actual"
+          if [ "$actual" -ne 25 ]; then
+            echo "::error::素材数量是 $actual，文档写的是 25，请同步更新"
+            exit 1
+          fi
+          # 文档里不该再出现 22 张 的说法
+          if grep -rn '22 张' --include='*.md' . | grep -v '\.git/'; then
+            echo "::error::文档仍写着 22 张，应为 25 张"
+            exit 1
+          fi
+          echo "数量一致"
